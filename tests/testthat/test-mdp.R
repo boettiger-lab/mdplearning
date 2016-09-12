@@ -47,7 +47,8 @@ testthat::test_that("Simulation with fixed policy, finite time", {
                })
 
 
-testthat::test_that("Simulation with fixed policy, observation error present", {
+testthat::test_that("Simulation with fixed policy, 
+                    observation error present", {
   out <- mdp_sim(transition[[1]], reward, discount, x0 = 10, 
                Tmax = 20, policy = df$policy, observation = observation)
   testthat::expect_is(out, "data.frame")
@@ -58,9 +59,11 @@ testthat::test_that("Simulation with learning, observation error present", {
                true_transition = transition[[1]], observation = observation)
   testthat::expect_is(out, "list")
                })
-testthat::test_that("Simulation with learning, observation error present, finite time", {
+testthat::test_that("Simulation with learning, observation error present,
+                    finite time", {
   out <- mdp_sim(transition, reward, discount, x0 = 10, Tmax = 20, 
-               true_transition = transition[[1]], observation = observation, type = "finite time")
+               true_transition = transition[[1]], observation = observation,
+               type = "finite time")
   testthat::expect_is(out, "list")
                })
 
