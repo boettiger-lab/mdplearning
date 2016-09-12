@@ -4,8 +4,8 @@
 \alias{mdp_value_of_policy}
 \title{mdp_value_of_policy}
 \usage{
-mdp_value_of_policy(policy, transition, reward, discount, model_prior = rep(1,
-  length(transition))/length(transition), max_iter = 500, epsilon = 1e-05)
+mdp_value_of_policy(policy, transition, reward, discount, model_prior = NULL,
+  max_iter = 500, epsilon = 1e-05)
 }
 \arguments{
 \item{policy}{the policy for which we want to determine the expected value}

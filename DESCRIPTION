@@ -7,6 +7,8 @@ Authors@R: c(person("Carl", "Boettiger", email = "cboettig@gmail.com", role = c(
 Description: Utilities for planning and learning in uncertain systems by
     applying Bayesian learning approaches to Markov Decision Processes.
 License: BSD_2_clause + file LICENSE
+URL: https://github.com/cboettig/mdplearning
+BugReports: https://github.com/cboettig/mdplearning/issues
 LazyData: TRUE
 Encoding: UTF-8
 Suggests:

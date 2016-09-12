@@ -4,9 +4,9 @@
 \alias{compute_mdp_policy}
 \title{compute mdp policy}
 \usage{
-compute_mdp_policy(transition, reward, discount, model_prior = rep(1,
-  length(transition))/length(transition), max_iter = 500, epsilon = 1e-05,
-  type = c("policy iteration", "value iteration", "finite time"))
+compute_mdp_policy(transition, reward, discount, model_prior = NULL,
+  max_iter = 500, epsilon = 1e-05, type = c("policy iteration",
+  "value iteration", "finite time"))
 }
 \arguments{
 \item{transition}{list of transition matrices, one per model}

@@ -12,7 +12,15 @@
 #' df <- compute_mdp_policy(transition, reward, discount)
 #' v <- mdp_value_of_policy(df$policy, transition, reward, discount)
 #' @export
-mdp_value_of_policy <- function(policy, transition, reward, discount, model_prior = rep(1, length(transition))/length(transition), max_iter = 500, epsilon = 1e-5){
+mdp_value_of_policy <- function(policy, transition, reward, discount, 
+                                model_prior = NULL, 
+                                max_iter = 500, epsilon = 1e-5){
+
+
+  if(is.null(model_prior)){
+    model_prior<- rep(1, length(transition)) / length(transition)
+  }
+
   if(is.array(transition)){
     transition <- list(transition)
   }

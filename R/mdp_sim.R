@@ -42,11 +42,17 @@
 #'                Tmax = 20, observation = models[[1]][["observation"]])
 mdp_sim <- function(transition, reward, discount,
                     model_prior = NULL,
-                    x0, Tmax = 20, true_transition = transition,
+                    x0, 
+                    Tmax = 20, 
+                    true_transition = transition,
                     observation = NULL,
                     a0 = 1,
                     policy = NULL,
-                    max_iter = 500, epsilon = 1e-5, type = c("policy iteration", "value iteration", "finite time")){
+                    max_iter = 500, 
+                    epsilon = 1e-5, 
+                    type = c("policy iteration", 
+                             "value iteration", 
+                             "finite time")){
   type <- match.arg(type)
 
   n_states <- dim(true_transition)[1]
@@ -65,17 +71,22 @@ mdp_sim <- function(transition, reward, discount,
   time <- 2:(Tmax+1)
   for(t in time){
 
-    ## if no policy is given, then we learn over the models and update policy each time
+    ## if no policy is given, then we learn over the models and update
     if(is.null(policy)){
-      if(type == "finite time") max_iter <- Tmax - t+1
-      out <- compute_mdp_policy(transition, reward, discount, q[t,], max_iter = max_iter, epsilon = epsilon, type = type)
+      if(type == "finite time"){ 
+        max_iter <- Tmax - t+1
+      }
+      out <- compute_mdp_policy(transition, reward, discount, 
+                                q[t,], max_iter = max_iter, 
+                                epsilon = epsilon, type = type)
     } else {
       out <- list(policy = policy)
     }
 
     ## Use perfect observations unless observation matrix is given
     if(!is.null(observation)){
-      obs[t] <- sample(1:dim(observation)[2], 1, prob = observation[state[t], , action[t-1]])
+      obs[t] <- sample(1:dim(observation)[2], 1, 
+                       prob = observation[state[t], , action[t-1]])
     } else{
       obs[t] <- state[t]
     }
@@ -88,10 +99,14 @@ mdp_sim <- function(transition, reward, discount,
 
     ## Update belief
     if(is.null(policy))
-      q[t+1,] <- bayes_update_model_belief(q[t,], state[t], state[t+1], action[t], transition)
+      q[t+1,] <- bayes_update_model_belief(q[t,], state[t], 
+                                           state[t+1], action[t], 
+                                           transition)
   }
 
-  df = data.frame(time = 1:Tmax, state = state[time], obs = obs[time], action = action[time], value = value[time])
+  df <- data.frame(time = 1:Tmax, state = state[time], 
+                   obs = obs[time], action = action[time], 
+                   value = value[time])
   if(is.null(policy))
     list(df = df, posterior = q[time,])
   else
@@ -103,6 +118,4 @@ bayes_update_model_belief <- function(model_prior, x_t, x_t1, a_t, transition){
   P <- vapply(1:n_models, function(m) transition[[m]][x_t,x_t1,a_t], numeric(1))
   model_prior * P / sum(model_prior * P)
 }
-
-
 

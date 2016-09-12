@@ -18,10 +18,17 @@
 #' df <- compute_mdp_policy(transition, reward, discount)
 #' plot(df$state, df$state - df$policy, xlab = "stock", ylab="escapement")
 compute_mdp_policy <- function(transition, reward, discount,
-                               model_prior = rep(1, length(transition))/length(transition),
-                               max_iter = 500, epsilon = 1e-5, type = c("policy iteration", "value iteration", "finite time")){
+                               model_prior = NULL,
+                               max_iter = 500, 
+                               epsilon = 1e-5, 
+                               type = c("policy iteration", 
+                                        "value iteration", 
+                                        "finite time")){
 
   type <- match.arg(type)
+  if(is.null(model_prior)){
+    model_prior <- rep(1, length(transition))/length(transition)
+  }
 
   n_models <- length(transition)
   n_states <- dim(transition[[1]])[1]
