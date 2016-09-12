@@ -1,0 +1,14 @@
+Package: mdplearning
+Type: Package
+Title: Bayesian Learning Algorithms for Markov Decision Processes
+Version: 0.1.0
+Authors@R: c(person("Carl", "Boettiger", email = "cboettig@gmail.com", role = c("aut", "cre")),
+             person("Milad", "Memarzadeh", role = "aut"))
+Description: Utilities for planning and learning in uncertain systems by
+    applying Bayesian learning approaches to Markov Decision Processes.
+License: BSD_2_clause + file LICENSE
+LazyData: TRUE
+Encoding: UTF-8
+Suggests:
+    testthat
+RoxygenNote: 5.0.1
