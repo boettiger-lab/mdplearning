@@ -29,7 +29,8 @@ testthat::test_that("Test that we learned the correct model", {
 
 testthat::test_that("Simulation with learning, observation error present", {
   out <- mdp_learning(transition, reward, discount, x0 = 10, Tmax = 20, 
-                      true_transition = transition[[1]], observation = observation)
+                      true_transition = transition[[1]], 
+                      observation = observation)
   testthat::expect_is(out, "list")
 })
 
