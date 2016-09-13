@@ -55,6 +55,4 @@ mdp_planning <- function(transition, reward, discount, model_prior = NULL,
   data.frame(time = 1:Tmax, state = state[time], 
              obs = obs[time], action = action[time], 
              value = value[time])
-  
-  
 }

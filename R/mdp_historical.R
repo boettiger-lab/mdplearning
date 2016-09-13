@@ -1,6 +1,7 @@
 #' mdp_historical
 #' 
 #' @inheritParams mdp_compute_policy
+#' @inheritParams mdp_planning
 #' @param state sequence of states observed historically
 #' @param action sequence of historical actions taken at time of observing that state
 #' @return a list with component "df", a data.frame showing the historical state, 
@@ -10,7 +11,7 @@
 mdp_historical <- function(transition, reward, discount, model_prior = NULL,
                             state, action, ...){
   
-  Tmax = length(state)
+  Tmax <- length(state)
   n_models <- length(transition)
   recommended <- numeric(Tmax)
   if(is.null(model_prior)) 
@@ -19,16 +20,12 @@ mdp_historical <- function(transition, reward, discount, model_prior = NULL,
   belief[1,] <- model_prior
   
   for(t in 1:(Tmax-1)){
-    out <- mdp_online(transition, reward, discount, model_prior, state[t], action[t], state[t+1], ...)
+    out <- mdp_online(transition, reward, discount, model_prior,
+                      state[t], action[t], state[t+1], ...)
     recommended[t] <- out$action
     belief[t+1,] <- out$posterior
   }
   
-  list(df = data.frame(time = 1:Tmax, state, action, recommended), posterior = belief)
+  list(df = data.frame(time = 1:Tmax, state, action, recommended),
+       posterior = belief)
 }
-
-
-
-
-
-

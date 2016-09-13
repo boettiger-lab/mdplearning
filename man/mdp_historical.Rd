@@ -19,6 +19,8 @@ mdp_historical(transition, reward, discount, model_prior = NULL, state,
 \item{state}{sequence of states observed historically}
 
 \item{action}{sequence of historical actions taken at time of observing that state}
+
+\item{...}{additional arguments to \code{\link{mdp_compute_policy}}}
 }
 \value{
 a list with component "df", a data.frame showing the historical state, 

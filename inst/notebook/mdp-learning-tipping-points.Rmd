@@ -126,20 +126,20 @@ compare_policies <- function(transition){
   mid <- round((length(transition)+1) / 2)
   
   qt_unif <- rep(1, length=length(transition)) / length(transition)
-  unif <- compute_mdp_policy(transition, utility, discount, qt_unif)
+  unif <- mdp_compute_policy(transition, utility, discount, qt_unif)
 
   qt_high <- numeric(length(transition))
   qt_high[max] <- 1
-  high <- compute_mdp_policy(transition, utility, discount, qt_high)
+  high <- mdp_compute_policy(transition, utility, discount, qt_high)
   
   qt_mean <- numeric(length(transition))
   qt_mean[mid] <- 1
-  mean <- compute_mdp_policy(transition, utility, discount, qt_mean)
+  mean <- mdp_compute_policy(transition, utility, discount, qt_mean)
   
   
   qt_low <- numeric(length(transition))
   qt_low[2] <- 1
-  low <- compute_mdp_policy(transition, utility, discount, qt_low)
+  low <- mdp_compute_policy(transition, utility, discount, qt_low)
 
   data.frame(states, low = low$policy, mean = mean$policy, high = high$policy, unif = unif$policy) 
   
@@ -240,8 +240,8 @@ Under each of the above scenarios in the Ricker model, the value is realtively i
 ```{r}
 Tmax <- 50
 true_i <- 3
-unif <- compute_mdp_policy(C_matrices, utility, discount)
-df <- mdp_sim(C_matrices[[true_i]], utility, discount, x0 = 30, Tmax = Tmax, policy = unif$policy)
+unif <- mdp_compute_policy(C_matrices, utility, discount)
+df <- mdp_planning(C_matrices[[true_i]], utility, discount, x0 = 30, Tmax = Tmax, policy = unif$policy)
 ```
 
 ```{r}
@@ -253,7 +253,7 @@ df %>% ggplot(aes(time, state)) + geom_line() + geom_line(aes(y = action), col =
 ```{r}
 sims <- 
 map_df(1:100, 
-       function(i) mdp_sim(C_matrices[[true_i]], utility, discount, x0 = 30, Tmax = Tmax, policy = unif$policy),
+       function(i) mdp_planning(C_matrices[[true_i]], utility, discount, x0 = 30, Tmax = Tmax, policy = unif$policy),
   .id = "rep")
 
 ```
@@ -282,7 +282,7 @@ observation <- matrices$observation
 
 sims <- 
 map_df(1:100, 
-       function(i) mdp_sim(C_matrices[[true_i]], reward = utility, discount = discount, x0 = 30, Tmax = Tmax, observation = observation, policy = unif$policy),
+       function(i) mdp_planning(C_matrices[[true_i]], reward = utility, discount = discount, x0 = 30, Tmax = Tmax, observation = observation, policy = unif$policy),
   .id = "rep")
 
 sims %>% 
@@ -299,7 +299,7 @@ sims %>% filter(time == Tmax) %>% summarise(sum(state == 1))
 ```{r}
 Tmax <- 50
 true_i <- 3
-out <- mdp_sim(C_matrices, utility, discount, x0 = 30, Tmax = Tmax, true_transition = C_matrices[[true_i]])
+out <- mdp_learning(C_matrices, utility, discount, x0 = 30, Tmax = Tmax, true_transition = C_matrices[[true_i]])
 ```
 
 Simulation trajectories:
@@ -322,7 +322,7 @@ Replicate simulations:
 ```{r}
 sims <- 
 map_df(1:100, 
-       function(i) mdp_sim(C_matrices, utility, discount, x0 = 30, Tmax = Tmax, true_transition = C_matrices[[true_i]])$df, 
+       function(i) mdp_learning(C_matrices, utility, discount, x0 = 30, Tmax = Tmax, true_transition = C_matrices[[true_i]])$df, 
   .id = "rep")
 
 ```
@@ -334,7 +334,7 @@ sims %>%
 
 ```
 
-How many have collapsed? (Note that `mdp_sim` recomputes policy based on finite future time window)
+How many have collapsed? 
 
 ```{r}
 sims %>% filter(time == Tmax-1) %>% summarise(sum(state == 1))
@@ -350,7 +350,7 @@ We have a much easier time learning the right value of the other parameters.
 ```{r}
 Tmax <- 50
 true_i <- 3
-out <- mdp_sim(K_matrices, utility, discount, x0 = 30, Tmax = Tmax, true_transition = K_matrices[[true_i]])
+out <- mdp_learning(K_matrices, utility, discount, x0 = 30, Tmax = Tmax, true_transition = K_matrices[[true_i]])
 ```
 
 Simulation trajectories:
@@ -376,7 +376,7 @@ Learning the r parameter is also quite efficient:
 ```{r}
 Tmax <- 50
 true_i <- 3
-out <- mdp_sim(r_matrices, utility, discount, x0 = 30, Tmax = Tmax, true_transition = r_matrices[[true_i]])
+out <- mdp_learning(r_matrices, utility, discount, x0 = 30, Tmax = Tmax, true_transition = r_matrices[[true_i]])
 ```
 
 Simulation trajectories:
@@ -401,7 +401,7 @@ barplot(out$posterior[Tmax,])
 ```{r}
 Tmax <- 50
 true_i <- 3
-out <- mdp_sim(sigma_matrices, utility, discount, x0 = 30, Tmax = Tmax, true_transition = sigma_matrices[[true_i]])
+out <- mdp_learning(sigma_matrices, utility, discount, x0 = 30, Tmax = Tmax, true_transition = sigma_matrices[[true_i]])
 ```
 
 Simulation trajectories:

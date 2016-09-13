@@ -47,7 +47,7 @@ out <- mdp_learning(transition, reward, discount, x0 = 10,
 out$posterior[20,]
 
 ## Simulate MDP strategy under observation uncertainty
-out <- mdp_sim(transition = transition, reward, discount, x0 = 10,
+out <- mdp_learning(transition = transition, reward, discount, x0 = 10,
                true_transition = transition[[1]],
                Tmax = 20, observation = models[[1]]$observation)
 }

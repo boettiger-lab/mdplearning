@@ -21,9 +21,7 @@ mdp_value_of_policy <- function(policy, transition, reward, discount,
     model_prior<- rep(1, length(transition)) / length(transition)
   }
 
-  if(is.array(transition)){
-    transition <- list(transition)
-  }
+
   n_models <- length(transition)
   n_states <- dim(transition[[1]])[1]
   n_actions <- dim(transition[[1]])[3]

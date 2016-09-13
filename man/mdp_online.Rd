@@ -21,6 +21,8 @@ mdp_online(transition, reward, discount, model_prior, prev_state, prev_action,
 \item{prev_action}{the action taken after observing the previous state}
 
 \item{state}{the most recent state observed}
+
+\item{...}{additional arguments to \code{\link{mdp_compute_policy}}}
 }
 \value{
 a list, with component 'action' giving the action recommended, and posterior, a 
@@ -32,6 +34,11 @@ Given previous state, previous action, and current state, update the model prior
 \details{
 mdp_online provides a real-time updating mechanism given the latest observations.
  To learn the best model and compare proposed actions across historical data, use mdp_historical,
- which loops over mdp_online.
+ which loops over mdp_online.  
+ @examples 
+source(system.file("examples/K_models.R", package="mdplearning"))
+transition <- lapply(models, `[[`, "transition")
+reward <- models[[1]]$reward
+mdp_online(transition, reward, discount, c(0.5, 0.5), 10, 1, 12)
 }
 

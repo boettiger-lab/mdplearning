@@ -6,6 +6,7 @@
 #' 
 #' Given previous state, previous action, and current state, update the model prior and propose best action
 #' @inheritParams mdp_compute_policy
+#' @inheritParams mdp_planning
 #' @param prev_state the previous state of the system
 #' @param prev_action the action taken after observing the previous state
 #' @param state the most recent state observed
