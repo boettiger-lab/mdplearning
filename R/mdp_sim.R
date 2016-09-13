@@ -74,7 +74,7 @@ mdp_sim <- function(transition, reward, discount,
     ## if no policy is given, then we learn over the models and update
     if(is.null(policy)){
       if(type == "finite time"){ 
-        max_iter <- Tmax - t+1
+        max_iter <- Tmax + 3 - t
       }
       out <- compute_mdp_policy(transition, reward, discount, 
                                 q[t,], max_iter = max_iter, 

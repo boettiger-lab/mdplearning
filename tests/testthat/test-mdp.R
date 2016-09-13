@@ -30,9 +30,6 @@ testthat::test_that("value of policies given a list of transition matrices", {
   v <- mdp_value_of_policy(df$policy, transition, reward, discount)
 })
 
-testthat::test_that("value of policy given a single transition matrix", {
-  v <- mdp_value_of_policy(df$policy, transition[[1]], reward, discount)
-})
 
 ## Simulation with fixed policy
 out <- mdp_sim(transition[[1]], reward, discount, x0 = 10, 
@@ -59,6 +56,8 @@ testthat::test_that("Simulation with learning, observation error present", {
                true_transition = transition[[1]], observation = observation)
   testthat::expect_is(out, "list")
                })
+
+
 testthat::test_that("Simulation with learning, observation error present,
                     finite time", {
   out <- mdp_sim(transition, reward, discount, x0 = 10, Tmax = 20, 

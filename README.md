@@ -19,7 +19,12 @@ Use transition matrices for two different modesl in an example fisheries system:
 
 ``` r
 library("mdplearning")
+library("ggplot2")
+library("dplyr")
+library("tidyr")
+```
 
+``` r
 source(system.file("examples/K_models.R", package="mdplearning"))
 transition <- lapply(models, `[[`, "transition")
 ```
@@ -48,36 +53,27 @@ highK <- compute_mdp_policy(transition, reward, discount, c(0,1))
 We can plot the resulting policies. Note that uniform uncertainty policy is a compromise intermediate between low K and high K models.
 
 ``` r
-library("ggplot2")
-library("dplyr")
-#> 
-#> Attaching package: 'dplyr'
-#> The following objects are masked from 'package:stats':
-#> 
-#>     filter, lag
-#> The following objects are masked from 'package:base':
-#> 
-#>     intersect, setdiff, setequal, union
 dplyr::bind_rows(unif = unif, lowK = lowK, highK = highK, .id = "model") %>%
   ggplot(aes(state, state - policy, col = model)) + geom_line()
 ```
 
-![](README-unnamed-chunk-7-1.png)
+![](README-fig1-1.png)
 
 We can use `mdp_sim` to simulate (without learning) by specifying a fixed policy in advance. `mdp_sim` also permits us to include observation error in the simulation (though it is not accounted for by MDP optimization).
 
 ``` r
-df <- mdp_sim(transition[[1]], reward, discount, x0 = 10, Tmax = 20, policy = unif$policy, observation = models[[1]]$observation)
+df <- mdp_sim(transition[[1]], reward, discount, x0 = 10, Tmax = 20, 
+              policy = unif$policy, observation = models[[1]]$observation)
 
 
-library("tidyr")
+
 df %>% 
   select(-value) %>% 
   gather(series, stock, -time) %>% 
   ggplot(aes(time, stock, color = series)) + geom_line()
 ```
 
-![](README-unnamed-chunk-8-1.png)
+![](README-fig2-1.png)
 
 ### Learning
 
@@ -92,5 +88,5 @@ The final belief shows a strong convergence to model 1, which was used as the tr
 
 ``` r
 out$posterior[20,]
-#> [1] 1.000000e+00 4.981225e-14
+#> [1] 1.000000e+00 1.834961e-13
 ```

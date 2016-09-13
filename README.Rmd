@@ -30,9 +30,14 @@ devtools::install_github("cboettig/mdplearning")
 
 Use transition matrices for two different modesl in an example fisheries system:
 
-```{r}
+```{r message=FALSE}
 library("mdplearning")
+library("ggplot2")
+library("dplyr")
+library("tidyr")
+```
 
+```{r}
 source(system.file("examples/K_models.R", package="mdplearning"))
 transition <- lapply(models, `[[`, "transition")
 ```
@@ -62,9 +67,7 @@ highK <- compute_mdp_policy(transition, reward, discount, c(0,1))
 
 We can plot the resulting policies. Note that uniform uncertainty policy is a compromise intermediate between low K and high K models.
 
-```{r}
-library("ggplot2")
-library("dplyr")
+```{r fig1}
 dplyr::bind_rows(unif = unif, lowK = lowK, highK = highK, .id = "model") %>%
   ggplot(aes(state, state - policy, col = model)) + geom_line()
 ```
@@ -73,11 +76,12 @@ dplyr::bind_rows(unif = unif, lowK = lowK, highK = highK, .id = "model") %>%
 We can use `mdp_sim` to simulate (without learning) by specifying a fixed policy in advance. `mdp_sim` also permits us to include observation error in the simulation (though it is not accounted for by MDP optimization).
 
 
-```{r}
-df <- mdp_sim(transition[[1]], reward, discount, x0 = 10, Tmax = 20, policy = unif$policy, observation = models[[1]]$observation)
+```{r fig2}
+df <- mdp_sim(transition[[1]], reward, discount, x0 = 10, Tmax = 20, 
+              policy = unif$policy, observation = models[[1]]$observation)
 
 
-library("tidyr")
+
 df %>% 
   select(-value) %>% 
   gather(series, stock, -time) %>% 
