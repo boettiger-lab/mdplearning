@@ -12,5 +12,6 @@ BugReports: https://github.com/cboettig/mdplearning/issues
 LazyData: TRUE
 Encoding: UTF-8
 Suggests:
-    testthat
+    testthat,
+    covr
 RoxygenNote: 5.0.1
