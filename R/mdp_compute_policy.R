@@ -6,6 +6,7 @@
 #' @param model_prior the prior belief over models, a numeric of length(transitions). Uniform by default
 #' @param max_iter maximum number of iterations to perform
 #' @param epsilon convergence tolerance
+#' @param Tmax termination time for finite time calculation, ignored otherwise
 #' @param type consider converged when policy converges or when value converges?
 #'
 #' @return a data.frame with the optimal policy and (discounted) value associated with each state
@@ -15,21 +16,19 @@
 #' source(system.file("examples/K_models.R", package="mdplearning"))
 #' transition <- lapply(models, `[[`, "transition")
 #' reward <- models[[1]][["reward"]]
-#' df <- compute_mdp_policy(transition, reward, discount)
+#' df <- mdp_compute_policy(transition, reward, discount)
 #' plot(df$state, df$state - df$policy, xlab = "stock", ylab="escapement")
-compute_mdp_policy <- function(transition, reward, discount,
+mdp_compute_policy <- function(transition, reward, discount,
                                model_prior = NULL,
                                max_iter = 500, 
-                               epsilon = 1e-5, 
+                               epsilon = 1e-5,
+                               Tmax = max_iter,
                                type = c("policy iteration", 
                                         "value iteration", 
                                         "finite time")){
 
   type <- match.arg(type)
-  if(is.null(model_prior)){
-    model_prior <- rep(1, length(transition))/length(transition)
-  }
-
+  
   n_models <- length(transition)
   n_states <- dim(transition[[1]])[1]
   n_actions <- dim(transition[[1]])[3]
@@ -38,7 +37,13 @@ compute_mdp_policy <- function(transition, reward, discount,
   V_model <- array(dim=c(n_states, n_models))
   converged <- FALSE
   t <- 1
-
+  if(is.null(model_prior)){
+    model_prior <- rep(1, n_models) / n_models
+  }
+  
+  if(type == "finite time")
+    max_iter <- Tmax
+  
   while(t < max_iter && converged == FALSE){
     Q <- array(0, dim = c(n_states, n_actions))
     for (i in 1:n_actions) {

@@ -1,7 +1,7 @@
 #' mdp_value_of_policy
 #'
 #' Compute the expected net present (e.g. discounted) value of a (not-necessarily optimal) policy in a perfectly observed (MDP) system
-#' @inheritParams compute_mdp_policy
+#' @inheritParams mdp_compute_policy
 #' @param policy the policy for which we want to determine the expected value
 #' @return the expected net present value of the given policy, for each state
 #' @details transition can be a single transition matrix or a list of transition matrices
@@ -9,7 +9,7 @@
 #' source(system.file("examples/K_models.R", package="mdplearning"))
 #' transition <- lapply(models, `[[`, "transition")
 #' reward <- models[[1]][["reward"]]
-#' df <- compute_mdp_policy(transition, reward, discount)
+#' df <- mdp_compute_policy(transition, reward, discount)
 #' v <- mdp_value_of_policy(df$policy, transition, reward, discount)
 #' @export
 mdp_value_of_policy <- function(policy, transition, reward, discount, 
