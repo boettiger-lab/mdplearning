@@ -7,3 +7,4 @@
 ^\.drone\.yml
 inst/notebook/*
 ^codecov\.yml$
+^data-raw$

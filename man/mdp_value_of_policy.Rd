@@ -29,7 +29,7 @@ the expected net present value of the given policy, for each state
 Compute the expected net present (e.g. discounted) value of a (not-necessarily optimal) policy in a perfectly observed (MDP) system
 }
 \details{
-transition can be a single transition matrix or a list of transition matrices
+transition a list of transition matrices
 }
 \examples{
 source(system.file("examples/K_models.R", package="mdplearning"))

@@ -4,7 +4,7 @@
 #' @inheritParams mdp_compute_policy
 #' @param policy the policy for which we want to determine the expected value
 #' @return the expected net present value of the given policy, for each state
-#' @details transition can be a single transition matrix or a list of transition matrices
+#' @details transition a list of transition matrices
 #' @examples
 #' source(system.file("examples/K_models.R", package="mdplearning"))
 #' transition <- lapply(models, `[[`, "transition")
@@ -20,7 +20,6 @@ mdp_value_of_policy <- function(policy, transition, reward, discount,
   if(is.null(model_prior)){
     model_prior<- rep(1, length(transition)) / length(transition)
   }
-
 
   n_models <- length(transition)
   n_states <- dim(transition[[1]])[1]
