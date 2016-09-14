@@ -127,7 +127,7 @@ out <- mdp_historical(transition, reward, discount, state = y, action = a)
 
 ```{r}
 out$df %>% 
-  #mutate(state = states[state], recommended = actions[recommended], action = actions[action]) %>% 
+  mutate(state = states[state], optimal = actions[optimal], action = actions[action]) %>% 
   gather(series, stock, -time) %>% 
   ggplot(aes(time, stock, color = series)) + geom_line()
 ```

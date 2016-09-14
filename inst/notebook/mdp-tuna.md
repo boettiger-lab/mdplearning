@@ -140,6 +140,10 @@ out$df %>%
   ggplot(aes(time, stock, color = series)) + geom_line()
 ```
 
+```
+## Warning: Removed 1 rows containing missing values (geom_path).
+```
+
 ![](mdp-tuna_files/figure-html/unnamed-chunk-12-1.png)<!-- -->
 
 
