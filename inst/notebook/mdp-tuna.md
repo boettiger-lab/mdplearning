@@ -19,6 +19,11 @@ library("dplyr")
 ## choose the state/action/obs space
 states <- seq(0,1.2, length=100) # Vector of all possible states
 actions <- seq(0,.8, length=100)   # Vector of actions: harvest
+
+states <- exp(seq(0, log(1.2 + 1), len=100))-1 # Vector of all possible states
+actions <- exp(seq(0, log(.8 + 1), length=100)) - 1   # Vector of actions: harvest
+
+
 obs <- states
 K <- 0.9903371
 r <- 0.05699246
@@ -135,7 +140,7 @@ out <- mdp_historical(transition, reward, discount, state = y, action = a)
 
 ```r
 out$df %>% 
-  #mutate(state = states[state], recommended = actions[recommended], action = actions[action]) %>% 
+  mutate(state = states[state], optimal = actions[optimal], action = actions[action]) %>% 
   gather(series, stock, -time) %>% 
   ggplot(aes(time, stock, color = series)) + geom_line()
 ```
