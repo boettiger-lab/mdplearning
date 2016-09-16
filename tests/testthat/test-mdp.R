@@ -23,7 +23,7 @@ out <- mdp_learning(transition, reward, discount, x0 = 10,
 
 testthat::test_that("Test that we learned the correct model", {
   belief <- out$posterior[20,]
-  testthat::expect_gt(belief[1], belief[2])
+  testthat::expect_gt(belief[[1]], belief[[2]])
 })
 
 

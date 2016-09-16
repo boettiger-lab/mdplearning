@@ -30,7 +30,7 @@ mdp_learning(transition, reward, discount, model_prior = NULL, x0,
 }
 \value{
 a list, containing: data frame "df" with the state, action and a value at each time step in the simulation,
-and an array "posterior", in which the t'th row shows the belief state at time t.
+and a data.frame "posterior", in which the t'th row shows the belief state at time t.
 }
 \description{
 Simulate learning under the mdp policy

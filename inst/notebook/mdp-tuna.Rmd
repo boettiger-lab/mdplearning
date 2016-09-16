@@ -21,12 +21,13 @@ library("dplyr")
 
 ```{r}
 ## choose the state/action/obs space
-states <- seq(0,1.2, length=100) # Vector of all possible states
-actions <- seq(0,.8, length=100)   # Vector of actions: harvest
-
-states <- exp(seq(0, log(1.2 + 1), len=100))-1 # Vector of all possible states
-actions <- exp(seq(0, log(.8 + 1), length=100)) - 1   # Vector of actions: harvest
-
+states <- seq(0,1.2, length=30)   # Vector of actions: harvest
+#states <- c(seq(0, 0.108, by = 0.012/10), seq(0.120, 1.2, by = 0.012)) # Vector of all possible states
+#actions <- seq(0,.8, length=100)   # Vector of actions: harvest
+actions <- states
+p <- 1.5
+#states <- seq(0, 1.2^(1/p), len=150)^p # Vector of all possible states
+#actions <- seq(0, 0.8^(1/p), len=50)^p   # Vector of actions: harvest
 
 obs <- states
 K <- 0.9903371
@@ -40,8 +41,36 @@ models <- data.frame(vars, fixed)
 
 ## Usual assumption at the moment for reward fn
 reward_fn <- function(x,h) pmin(x,h)
+```
 
-## Compute alphas for the above examples
+
+
+```{r}
+
+
+#states <- c(seq(0, 0.09, len = 5), seq(0.11, 0.31, len = 20), seq(0.32, 1.2, len = 35))
+
+
+#states <- c(seq(0, 0.08, 0.01), seq(0.09, 0.26, 0.01), seq(0.28, 0.5, by = 0.025), seq(0.5, 1.2, by = 0.035))
+#actions <- states
+#obs <- states
+
+m <- appl::fisheries_matrices(states, actions, obs, reward_fn, f =  appl:::ricker(0.05, K),
+                     sigma_g = sigma_g, sigma_m  = 0.3)
+s <- sapply(1:length(states), function(i) m$transition[i,i,1] > 0.9)
+states[s]
+length(states)
+
+mdp_compute_policy(list(m$transition), m$reward, discount) %>% 
+  ggplot(aes(states[state], states[state]-actions[policy])) + geom_line() +
+  geom_line(aes(states[state], actions[policy]), col='blue')
+```
+
+
+Compute alphas for the above examples
+
+```{r}
+
 tuna_models <- lapply(1:dim(models)[1], function(i){
   f <- switch(models[i, "model"],
               allen = appl:::allen(models[i, "r"], models[i, "K"], models[i, "C"]),
@@ -54,6 +83,10 @@ tuna_models <- lapply(1:dim(models)[1], function(i){
 
 })
 ```
+
+
+
+
 
 ```{r}
 models <- tuna_models[7:12]  ## 1:6 = sigma 0.1, 7:12 = sigma 0.3, 13:18 = sigma 0.6
@@ -68,6 +101,9 @@ observation <- models[[1]]$observation
 
 ```{r}
 unif <- mdp_compute_policy(transition, reward, discount)
+low <- mdp_compute_policy(transition, reward, discount, c(1,0,0,0,0,0))
+
+bind_rows(unif = unif, low = low, .id = "model") %>% ggplot(aes(states[state], states[state] - actions[policy], col = model)) + geom_line()
 ```
 
 

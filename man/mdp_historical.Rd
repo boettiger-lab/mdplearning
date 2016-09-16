@@ -23,9 +23,9 @@ mdp_historical(transition, reward, discount, model_prior = NULL, state,
 \item{...}{additional arguments to \code{\link{mdp_compute_policy}}}
 }
 \value{
-a list with component "df", a data.frame showing the historical state, 
-historical action, and what action would have been recommended by MDP; and an
-array showing the evolution of the belief over models during each subsequent observation
+a list with component "df", a data.frame showing the historical state,
+historical action, and what action would have been optimal by MDP; and a
+data.frame showing the evolution of the belief over models during each subsequent observation
 }
 \description{
 mdp_historical
