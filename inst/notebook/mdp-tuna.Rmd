@@ -23,9 +23,10 @@ library("dplyr")
 ## choose the state/action/obs space
 states <- seq(0,1.2, length=100)   # Vector of actions: harvest
 states <- seq(0,1.2, length=200)   # Vector of actions: harvest
+states <- c(seq(0,0.12, length=30), seq(0.12, 1.2, length=200))   # Vector of actions: harvest
 
-p <- 2
-states <- seq(0, 1.2^(1/p), len=100)^p # Vector of all possible states
+p <- 1.5
+states <- seq(0, 1.2^(1/p), len=200)^p # Vector of all possible states
 
 
 
@@ -36,7 +37,7 @@ r <- 0.05699246
 sigma_g <- 0.01720091
 discount <- 0.99
 
-vars <- expand.grid(r = seq(0.05, 0.3, by =0.05), sigma_m = c(0.1, 0.3, 0.6))
+vars <- expand.grid(r = seq(0.025, 0.2, by =0.025), sigma_m = 0.3)
 fixed <- data.frame(model = "ricker", sigma_g = sigma_g, discount = discount, K = K, C = NA)
 models <- data.frame(vars, fixed)
 
@@ -48,7 +49,7 @@ reward_fn <- function(x,h) pmin(x,h)
 Examine the policy for the `r = 0.05` model:
 
 ```{r}
-m <- appl::fisheries_matrices(states, actions, obs, reward_fn, f =  appl:::ricker(0.05, K),
+m <- appl::fisheries_matrices(states, actions, obs, reward_fn, f =  appl:::ricker(0.025, K),
                      sigma_g = sigma_g, sigma_m  = 0.3)
 
 ## show any fixed points in the discrete model
@@ -63,7 +64,7 @@ geom_line(aes(states[state], actions[policy]), col='blue')
 
 ```{r}
 
-tuna_models <- lapply(1:dim(models)[1], function(i){
+tuna_models <- parallel::mclapply(1:dim(models)[1], function(i){
   f <- switch(models[i, "model"],
               allen = appl:::allen(models[i, "r"], models[i, "K"], models[i, "C"]),
               ricker = appl:::ricker(models[i, "r"], models[i, "K"])
@@ -73,7 +74,7 @@ tuna_models <- lapply(1:dim(models)[1], function(i){
                      sigma_g = models[i, "sigma_g"], sigma_m  = models[i, "sigma_m"])
 
 
-})
+}, mc.cores = parallel::detectCores())
 ```
 
 
@@ -81,7 +82,7 @@ tuna_models <- lapply(1:dim(models)[1], function(i){
 
 
 ```{r}
-models <- tuna_models[7:12]  ## 1:6 = sigma 0.1, 7:12 = sigma 0.3, 13:18 = sigma 0.6
+models <- tuna_models
 reward <- models[[1]]$reward
 transitions <- lapply(models, `[[`, "transition")
 observation <- models[[1]]$observation
@@ -92,10 +93,18 @@ observation <- models[[1]]$observation
 
 
 ```{r}
-unif <- mdp_compute_policy(transitions, reward, discount)
-low <- mdp_compute_policy(transitions, reward, discount, c(1,0,0,0,0,0))
 
-bind_rows(unif = unif, low = low, .id = "model") %>%
+unif <- mdp_compute_policy(transitions, reward, discount)
+
+prior <- numeric(length(models))
+prior[1] <- 1
+low <- mdp_compute_policy(transitions, reward, discount, prior)
+
+prior <- numeric(length(models))
+prior[2] <- 1
+true <- mdp_compute_policy(transitions, reward, discount, prior)
+
+bind_rows(unif = unif, low = low, true = true, .id = "model") %>%
   ggplot(aes(states[state], states[state] - actions[policy], col = model)) + geom_line()
 ```
 
@@ -138,12 +147,22 @@ gather(variable, stock, -time) %>%
 ggplot(aes(time, stock, color = variable)) + geom_line(lwd=1) #  + geom_point()
 ```
 
+
+### Final beliefs
+
+Show the final belief over models for pomdp and mdp:
+
+
+```{r}
+barplot(as.numeric(mdp_hindcast$posterior[Tmax,]))
+```
+
 ## Compare rates of learning
 
 ```{r}
 # delta function for true model distribution
 h_star = array(0,dim = length(models)) 
-h_star[1] = 1
+h_star[2] = 1
 ## Fn for the base-2 KL divergence from true model, in a friendly format
 kl2 <- function(value) seewave::kl.dist(value, h_star, base = 2)[[2]]
 
@@ -156,14 +175,6 @@ ggplot(aes(time, kl)) +
   stat_summary(geom="line", fun.y = mean, lwd = 1)
 ```
 
-### Final beliefs
-
-Show the final belief over models for pomdp and mdp:
-
-
-```{r}
-barplot(as.numeric(mdp_hindcast$posterior[Tmax,]))
-```
 
 
 
@@ -183,7 +194,7 @@ We simulate replicates under MDP learning (with observation uncertainty):
 
 ```{r}
 mdp_forecast <- 
-pomdpplus::plus_replicate(2, 
+pomdpplus::plus_replicate(44, 
                mdp_learning(transition = transitions, reward = models[[1]]$reward, 
                             model_prior = as.numeric(mdp_hindcast$posterior[length(y),]),
                             discount = discount, x0 = x0,  Tmax = Tmax,
@@ -215,20 +226,6 @@ ggplot(aes(time, stock)) +
 ```
 
 
-
-```{r}
-mdp_forecast$df %>% 
-    select(-value, -obs) %>% 
-    mutate(state = states_mt[state], action = actions_mt[action], time = future[time]) %>%
-rename("catch (MT)" = action, "stock (MT)" = state) %>%  
-gather(variable, stock, -time, -rep) %>%
-ggplot(aes(time, stock)) + 
-  #geom_line(aes(group = interaction(rep,method), color = method), alpha=0.1) +
-  stat_summary(aes(color = variable), geom="line", fun.y = mean, lwd=1) +
-  stat_summary(aes(fill = variable), geom="ribbon", fun.data = mean_sdl, fun.args = list(mult=1), alpha = 0.25) + 
-  facet_wrap(~variable, ncol = 1, scales = "free_y")
-
-```
 
 
 ## MDP Planning
