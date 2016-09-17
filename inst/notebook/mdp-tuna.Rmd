@@ -183,7 +183,7 @@ We simulate replicates under MDP learning (with observation uncertainty):
 
 ```{r}
 mdp_forecast <- 
-pomdpplus::plus_replicate(20, 
+pomdpplus::plus_replicate(2, 
                mdp_learning(transition = transitions, reward = models[[1]]$reward, 
                             model_prior = as.numeric(mdp_hindcast$posterior[length(y),]),
                             discount = discount, x0 = x0,  Tmax = Tmax,
@@ -199,14 +199,15 @@ historical <- bluefin_tuna[c("tsyear", "total", "catch_landings")] %>%
   rename(time = tsyear, state = total, action = catch_landings)
 
 bind_rows(
-  mdp_forecast$df %>% 
+  historical = historical, 
+  mdp = mdp_forecast$df %>% 
     select(-value, -obs) %>% 
     mutate(state = states_mt[state], action = actions_mt[action], time = future[time]),
-  historical, .id = "method") %>%
+  .id = "method") %>%
 rename("catch (MT)" = action, "stock (MT)" = state) %>%  
 gather(variable, stock, -time, -rep, -method) %>%
 ggplot(aes(time, stock)) + 
-  #geom_line(aes(group = interaction(rep,method), color = method), alpha=0.1) +
+  geom_line(aes(group = interaction(rep,method), color = method), alpha=0.1) +
   stat_summary(aes(color = method), geom="line", fun.y = mean, lwd=1) +
   stat_summary(aes(fill = method), geom="ribbon", fun.data = mean_sdl, fun.args = list(mult=1), alpha = 0.25) + 
   facet_wrap(~variable, ncol = 1, scales = "free_y")
@@ -215,12 +216,19 @@ ggplot(aes(time, stock)) +
 
 
 
+```{r}
+mdp_forecast$df %>% 
+    select(-value, -obs) %>% 
+    mutate(state = states_mt[state], action = actions_mt[action], time = future[time]) %>%
+rename("catch (MT)" = action, "stock (MT)" = state) %>%  
+gather(variable, stock, -time, -rep) %>%
+ggplot(aes(time, stock)) + 
+  #geom_line(aes(group = interaction(rep,method), color = method), alpha=0.1) +
+  stat_summary(aes(color = variable), geom="line", fun.y = mean, lwd=1) +
+  stat_summary(aes(fill = variable), geom="ribbon", fun.data = mean_sdl, fun.args = list(mult=1), alpha = 0.25) + 
+  facet_wrap(~variable, ncol = 1, scales = "free_y")
 
-
-
-
-
-
+```
 
 
 ## MDP Planning
@@ -239,53 +247,4 @@ df %>%
   mutate(state = states[state], obs = states[obs], action = actions[action]) %>% 
   gather(series, stock, -time) %>% 
   ggplot(aes(time, stock, color = series)) + geom_line()
-```
-
-## MDP Learning
-
-
-```{r}
-out <- mdp_learning(transition, reward, discount, x0 = x0, Tmax = Tmax, 
-              observation = observation, 
-              true_transition = transition[[1]])
-
-```
-
-
-```{r}
-out$df %>% 
-  select(-value) %>% 
-  mutate(state = states[state], obs = states[obs], action = actions[action]) %>% 
-  gather(series, stock, -time) %>% 
-  ggplot(aes(time, stock, color = series)) + geom_line()
-```
-
-```{r}
-barplot(out$posterior[Tmax,])
-```
-
-## MDP Historical
-
-```{r}
-data("scaled_data")
-## Map continuous data to enumerated state / action
-y <- sapply(scaled_data$y, function(y) which.min(abs(states - y)))
-a <- sapply(scaled_data$a, function(a) which.min(abs(actions - a)))
-
-out <- mdp_historical(transition, reward, discount, state = y, action = a)
-
-```
-
-
-```{r}
-out$df %>% 
-  mutate(state = states[state], optimal = actions[optimal], action = actions[action]) %>% 
-  gather(series, stock, -time) %>% 
-  ggplot(aes(time, stock, color = series)) + geom_line()
-```
-
-```{r}
-Tmax <- length(y)
-
-barplot(out$posterior[Tmax,])
 ```
