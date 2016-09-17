@@ -24,10 +24,10 @@ tbl <-
   left_join(area) %>%
   left_join(lmestock) %>%
   left_join(lmerefs) %>%
-  select(scientificname, commonname, tsyear, r, ssb, total, catch_landings, 
+  select(scientificname, commonname, tsyear, r, ssb, total, catch_landings,
          r_unit, ssb_unit, total_unit, catch_landings_unit, country, lme_name,
          lme_number, stockid, assessid) %>%
-  
+
   group_by(commonname, lme_name, tsyear) %>%
   filter(catch_landings_unit == 'MT') %>%
   filter(total_unit == 'MT') %>%
@@ -37,9 +37,12 @@ tbl <-
 
 fish$catch_landings <- zero_is_na(fish$catch_landings)
 fish <- na.omit(fish)
+bluefin_tuna <- fish
+devtools::use_data(bluefin_tuna)
+
 
 N <- dim(fish)[1]
-scale <- max(fish$total) 
+scale <- max(fish$total)
 scaled_data <- data.frame(t = 1:N, y = fish$total / scale, a = fish$catch_landings / scale)
 
 devtools::use_data(scaled_data)
