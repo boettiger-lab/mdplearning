@@ -39,10 +39,15 @@ reward_fn <- function(x,h) pmin(x,h)
 ```
 
 
-Examine the policy for the smallest r model:
+Examine the policy for true model and the smallest r model:
 
 
 ```r
+true_m <- appl::fisheries_matrices(states, actions, obs, reward_fn, f =  appl:::ricker(r, K),
+                     sigma_g = sigma_g, sigma_m  = 0.3)
+
+
+
 m <- appl::fisheries_matrices(states, actions, obs, reward_fn, f =  appl:::ricker(0.025, K),
                      sigma_g = sigma_g, sigma_m  = 0.3)
 
@@ -58,9 +63,10 @@ states[s]
 ```
 
 ```r
-mdp_compute_policy(list(m$transition), m$reward, discount) %>% 
-ggplot(aes(states[state], states[state]-actions[policy])) + geom_line() +
-geom_line(aes(states[state], actions[policy]), col='blue')
+bind_rows(smallest = mdp_compute_policy(list(m$transition), m$reward, discount),
+          true_policy = mdp_compute_policy(list(true_m$transition), true_m$reward, discount),
+          .id = "model") %>%
+ggplot(aes(states[state], states[state]-actions[policy], col=model)) + geom_line()
 ```
 
 ![](mdp-tuna_files/figure-html/unnamed-chunk-3-1.png)<!-- -->
@@ -219,11 +225,11 @@ Tmax <- 150
 future <- 2009:(2009+Tmax)
 mdp_forecast <- 
 pomdpplus::plus_replicate(25, 
-               mdp_learning(transition = transitions, reward = models[[1]]$reward, 
+               mdp_learning(transition = transitions, reward = reward, 
                             model_prior = as.numeric(mdp_hindcast$posterior[length(y),]),
                             discount = discount, x0 = x0,  Tmax = Tmax,
-                            true_transition = transitions[[1]], 
-                            observation = models[[1]]$observation),
+                            true_transition = true_m$transition, 
+                            observation = observation),
                mc.cores = parallel::detectCores())
 ```
 
@@ -256,10 +262,15 @@ ggplot(aes(time, stock)) +
 
 ## MDP Planning
 
+#### Planning only solution given posterior model belief (e.g. almost certain knowledge of model)
+
 
 ```r
-df <- mdp_planning(transitions[[1]], reward, discount, x0 = x0, Tmax = Tmax, 
-              policy = unif$policy, observation = observation)
+model_prior <- as.numeric(mdp_hindcast$posterior[length(y),])
+planning <- mdp_compute_policy(transitions, reward, discount, model_prior)
+
+df <- mdp_planning(true_m$transition, reward, discount, x0 = x0, Tmax = Tmax, 
+              policy = planning$policy, observation = observation)
 ```
 
 
@@ -273,3 +284,34 @@ df %>%
 ```
 
 ![](mdp-tuna_files/figure-html/unnamed-chunk-16-1.png)<!-- -->
+
+
+
+
+#### Det policy
+
+
+```r
+f <- appl:::ricker(r, K)
+S_star <- optimize(function(x) x / discount - f(x,0), c(min(states),max(states)))$minimum
+h <- pmax(states - S_star,  0)
+policy <- sapply(h, function(h) which.min((abs(h - actions))))
+det <- data.frame(policy, value = 1:length(states), state = 1:length(states))
+
+
+df <- mdp_planning(true_m$transition, reward, discount, x0 = x0, Tmax = Tmax, 
+              policy = det$policy, observation = observation)
+```
+
+
+
+```r
+df %>% 
+  select(-value) %>%
+  mutate(state = states[state], obs = states[obs], action = actions[action]) %>% 
+  gather(series, stock, -time) %>% 
+  ggplot(aes(time, stock, color = series)) + geom_line()
+```
+
+![](mdp-tuna_files/figure-html/unnamed-chunk-18-1.png)<!-- -->
+
