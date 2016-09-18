@@ -43,7 +43,7 @@ reward_fn <- function(x,h) pmin(x,h)
 ```
 
 
-Examine the policy for the `r = 0.025` model:
+Examine the policy for the smallest r model:
 
 ```{r}
 m <- appl::fisheries_matrices(states, actions, obs, reward_fn, f =  appl:::ricker(0.025, K),
@@ -224,7 +224,7 @@ ggplot(aes(time, stock)) +
 
 ```{r}
 
-df <- mdp_planning(transition[[1]], reward, discount, x0 = x0, Tmax = Tmax, 
+df <- mdp_planning(transitions[[1]], reward, discount, x0 = x0, Tmax = Tmax, 
               policy = unif$policy, observation = observation)
 
 ```

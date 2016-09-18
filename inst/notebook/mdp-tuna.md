@@ -17,28 +17,58 @@ library("dplyr")
 
 ```r
 ## choose the state/action/obs space
-states <- seq(0,1.2, length=100) # Vector of all possible states
-actions <- seq(0,.8, length=100)   # Vector of actions: harvest
+states <- seq(0,1.2, length=200)  
 
-states <- exp(seq(0, log(1.2 + 1), len=100))-1 # Vector of all possible states
-actions <- exp(seq(0, log(.8 + 1), length=100)) - 1   # Vector of actions: harvest
+#states <- c(seq(0,0.12, length=30), seq(0.12, 1.2, length=200))   # Vector of actions: harvest
+#p <- 1.5
+#states <- seq(0, 1.2^(1/p), len=200)^p # Vector of all possible states
 
-
+actions <- states
 obs <- states
 K <- 0.9903371
 r <- 0.05699246
 sigma_g <- 0.01720091
 discount <- 0.99
 
-vars <- expand.grid(r = seq(0.05, 0.3, by =0.05), sigma_m = c(0.1, 0.3, 0.6))
+vars <- expand.grid(r = seq(0.025, 0.2, by =0.025), sigma_m = 0.3)
 fixed <- data.frame(model = "ricker", sigma_g = sigma_g, discount = discount, K = K, C = NA)
 models <- data.frame(vars, fixed)
 
 ## Usual assumption at the moment for reward fn
 reward_fn <- function(x,h) pmin(x,h)
+```
 
-## Compute alphas for the above examples
-tuna_models <- lapply(1:dim(models)[1], function(i){
+
+Examine the policy for the smallest r model:
+
+
+```r
+m <- appl::fisheries_matrices(states, actions, obs, reward_fn, f =  appl:::ricker(0.025, K),
+                     sigma_g = sigma_g, sigma_m  = 0.3)
+
+## show any fixed points in the discrete model
+s <- sapply(1:length(states), function(i) m$transition[i,i,1] > 0.99)
+states[s]
+```
+
+```
+##  [1] 0.000000000 0.006030151 0.012060302 0.018090452 0.024120603
+##  [6] 0.030150754 0.036180905 0.042211055 0.048241206 0.054271357
+## [11] 0.060301508 0.066331658 0.072361809
+```
+
+```r
+mdp_compute_policy(list(m$transition), m$reward, discount) %>% 
+ggplot(aes(states[state], states[state]-actions[policy])) + geom_line() +
+geom_line(aes(states[state], actions[policy]), col='blue')
+```
+
+![](mdp-tuna_files/figure-html/unnamed-chunk-3-1.png)<!-- -->
+
+
+
+```r
+tuna_models <- parallel::mclapply(1:dim(models)[1], function(i){
   f <- switch(models[i, "model"],
               allen = appl:::allen(models[i, "r"], models[i, "K"], models[i, "C"]),
               ricker = appl:::ricker(models[i, "r"], models[i, "K"])
@@ -48,14 +78,15 @@ tuna_models <- lapply(1:dim(models)[1], function(i){
                      sigma_g = models[i, "sigma_g"], sigma_m  = models[i, "sigma_m"])
 
 
-})
+}, mc.cores = parallel::detectCores())
 ```
 
 
+
 ```r
-models <- tuna_models[7:12]  ## 1:6 = sigma 0.1, 7:12 = sigma 0.3, 13:18 = sigma 0.6
+models <- tuna_models
 reward <- models[[1]]$reward
-transition <- lapply(models, `[[`, "transition")
+transitions <- lapply(models, `[[`, "transition")
 observation <- models[[1]]$observation
 ```
 
@@ -65,21 +96,169 @@ observation <- models[[1]]$observation
 
 
 ```r
-unif <- mdp_compute_policy(transition, reward, discount)
+unif <- mdp_compute_policy(transitions, reward, discount)
+prior <- numeric(length(models))
+prior[1] <- 1
+low <- mdp_compute_policy(transitions, reward, discount, prior)
+prior <- numeric(length(models))
+prior[2] <- 1
+true <- mdp_compute_policy(transitions, reward, discount, prior)
+
+bind_rows(unif = unif, low = low, true = true, .id = "model") %>%
+  ggplot(aes(states[state], states[state] - actions[policy], col = model)) + geom_line()
+```
+
+![](mdp-tuna_files/figure-html/unnamed-chunk-6-1.png)<!-- -->
+
+
+
+## Hindcast: Historical catch and stock
+
+
+```r
+set.seed(123)
+data("scaled_data")
+y <- sapply(scaled_data$y, function(y) which.min(abs(states - y)))
+a <- sapply(scaled_data$a, function(a) which.min(abs(actions - a)))
+Tmax <- length(y)
+
+data("bluefin_tuna")
+to_mt <- max(bluefin_tuna$total) # 1178363 # scaling factor for data
+states_mt <- to_mt * states
+actions_mt <- to_mt * actions
+year <- 1952:2009
+future <- 2009:2067
 ```
 
 
 
 ```r
-x0 <- which.min(abs(states - K))
-Tmax <- 20
+mdp_hindcast <- mdp_historical(transitions, reward, discount, state = y, action = a)
 ```
+
+
+### Merge and plot resulting optimal solutions
+
+
+```r
+mdp_hindcast$df %>%
+mutate("actual catch" = actions_mt[action], 
+       "estimated stock" = states_mt[state], 
+       optimal = actions_mt[optimal], 
+       time = year[time]) %>%
+       select(-state, -action) %>%
+gather(variable, stock, -time) %>% 
+ggplot(aes(time, stock, color = variable)) + geom_line(lwd=1) #  + geom_point()
+```
+
+```
+## Warning: Removed 1 rows containing missing values (geom_path).
+```
+
+![](mdp-tuna_files/figure-html/unnamed-chunk-9-1.png)<!-- -->
+
+
+### Final beliefs
+
+Show the final belief over models for pomdp and mdp:
+
+
+
+```r
+barplot(as.numeric(mdp_hindcast$posterior[Tmax,]))
+```
+
+![](mdp-tuna_files/figure-html/unnamed-chunk-10-1.png)<!-- -->
+
+## Compare rates of learning
+
+
+```r
+# delta function for true model distribution
+h_star = array(0,dim = length(models)) 
+h_star[2] = 1
+## Fn for the base-2 KL divergence from true model, in a friendly format
+kl2 <- function(value) seewave::kl.dist(value, h_star, base = 2)[[2]]
+
+mdp_hindcast$posterior %>%
+mutate(time = year[1:Tmax], rep = 1) %>%
+gather(model, value, -time, -rep) %>%
+group_by(time, rep) %>% 
+summarise(kl = kl2(value)) %>%
+ggplot(aes(time, kl)) + 
+  stat_summary(geom="line", fun.y = mean, lwd = 1)
+```
+
+```
+## Warning: Removed 1 rows containing non-finite values (stat_summary).
+```
+
+![](mdp-tuna_files/figure-html/unnamed-chunk-11-1.png)<!-- -->
+
+
+
+
+## Forecast simulations under MDP-learning
+
+All forecasts start from final stock, go forward an equal length of time:
+
+
+```r
+#x0 <- which.min(abs(1 - states)) # Initial stock, for hindcasts
+x0 <- y[length(y)] # Final stock, e.g. forcasts, = 9
+
+Tmax <- length(y)
+set.seed(123)
+```
+
+We simulate replicates under MDP learning (with observation uncertainty):
+
+
+```r
+Tmax <- 150
+future <- 2009:(2009+Tmax)
+mdp_forecast <- 
+pomdpplus::plus_replicate(25, 
+               mdp_learning(transition = transitions, reward = models[[1]]$reward, 
+                            model_prior = as.numeric(mdp_hindcast$posterior[length(y),]),
+                            discount = discount, x0 = x0,  Tmax = Tmax,
+                            true_transition = transitions[[1]], 
+                            observation = models[[1]]$observation),
+               mc.cores = parallel::detectCores())
+```
+
+## Compare forecasts
+
+
+```r
+historical <- bluefin_tuna[c("tsyear", "total", "catch_landings")] %>% 
+  rename(time = tsyear, state = total, action = catch_landings)
+
+bind_rows(
+  historical = historical, 
+  mdp = mdp_forecast$df %>% 
+    select(-value, -obs) %>% 
+    mutate(state = states_mt[state], action = actions_mt[action], time = future[time]),
+  .id = "method") %>%
+rename("catch (MT)" = action, "stock (MT)" = state) %>%  
+gather(variable, stock, -time, -rep, -method) %>%
+ggplot(aes(time, stock)) + 
+  geom_line(aes(group = interaction(rep,method), color = method), alpha=0.1) +
+  stat_summary(aes(color = method), geom="line", fun.y = mean, lwd=1) +
+  stat_summary(aes(fill = method), geom="ribbon", fun.data = mean_sdl, fun.args = list(mult=1), alpha = 0.25) + 
+  facet_wrap(~variable, ncol = 1, scales = "free_y")
+```
+
+![](mdp-tuna_files/figure-html/unnamed-chunk-14-1.png)<!-- -->
+
+
+
 
 ## MDP Planning
 
 
 ```r
-df <- mdp_planning(transition[[1]], reward, discount, x0 = x0, Tmax = Tmax, 
+df <- mdp_planning(transitions[[1]], reward, discount, x0 = x0, Tmax = Tmax, 
               policy = unif$policy, observation = observation)
 ```
 
@@ -93,69 +272,4 @@ df %>%
   ggplot(aes(time, stock, color = series)) + geom_line()
 ```
 
-![](mdp-tuna_files/figure-html/unnamed-chunk-7-1.png)<!-- -->
-
-## MDP Learning
-
-
-
-```r
-out <- mdp_learning(transition, reward, discount, x0 = x0, Tmax = Tmax, 
-              observation = observation, 
-              true_transition = transition[[1]])
-```
-
-
-
-```r
-out$df %>% 
-  select(-value) %>% 
-  mutate(state = states[state], obs = states[obs], action = actions[action]) %>% 
-  gather(series, stock, -time) %>% 
-  ggplot(aes(time, stock, color = series)) + geom_line()
-```
-
-![](mdp-tuna_files/figure-html/unnamed-chunk-9-1.png)<!-- -->
-
-
-```r
-barplot(out$posterior[Tmax,])
-```
-
-![](mdp-tuna_files/figure-html/unnamed-chunk-10-1.png)<!-- -->
-
-## MDP Historical
-
-
-```r
-data("scaled_data")
-## Map continuous data to enumerated state / action
-y <- sapply(scaled_data$y, function(y) which.min(abs(states - y)))
-a <- sapply(scaled_data$a, function(a) which.min(abs(actions - a)))
-
-out <- mdp_historical(transition, reward, discount, state = y, action = a)
-```
-
-
-
-```r
-out$df %>% 
-  mutate(state = states[state], optimal = actions[optimal], action = actions[action]) %>% 
-  gather(series, stock, -time) %>% 
-  ggplot(aes(time, stock, color = series)) + geom_line()
-```
-
-```
-## Warning: Removed 1 rows containing missing values (geom_path).
-```
-
-![](mdp-tuna_files/figure-html/unnamed-chunk-12-1.png)<!-- -->
-
-
-```r
-Tmax <- length(y)
-
-barplot(out$posterior[Tmax,])
-```
-
-![](mdp-tuna_files/figure-html/unnamed-chunk-13-1.png)<!-- -->
+![](mdp-tuna_files/figure-html/unnamed-chunk-16-1.png)<!-- -->
