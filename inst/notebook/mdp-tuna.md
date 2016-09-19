@@ -21,7 +21,7 @@ library("dplyr")
 
 #states <- c(seq(0,0.12, length=30), seq(0.12, 1.2, length=200))   # Vector of actions: harvest
 p <- 1.5
-states <- seq(0, 1.2^(1/p), len=200)^p # Vector of all possible states
+states <- seq(0, 1.2^(1/p), len=100)^p # Vector of all possible states
 
 actions <- states
 obs <- states
@@ -39,42 +39,12 @@ reward_fn <- function(x,h) pmin(x,h)
 ```
 
 
-Examine the policy for true model and the smallest r model:
-
 
 ```r
 true_m <- appl::fisheries_matrices(states, actions, obs, reward_fn, f =  appl:::ricker(r, K),
                      sigma_g = sigma_g, sigma_m  = 0.3)
 
 
-
-m <- appl::fisheries_matrices(states, actions, obs, reward_fn, f =  appl:::ricker(0.025, K),
-                     sigma_g = sigma_g, sigma_m  = 0.3)
-
-## show any fixed points in the discrete model
-s <- sapply(1:length(states), function(i) m$transition[i,i,1] > 0.99)
-states[s]
-```
-
-```
-##  [1] 0.0000000000 0.0004274661 0.0012090566 0.0022211788 0.0034197284
-##  [6] 0.0047792158 0.0062824423 0.0079167821 0.0096724526 0.0115415834
-## [11] 0.0135176635 0.0155951896 0.0177694301 0.0200362601 0.0223920412
-## [16] 0.0248335336 0.0273578274 0.0299622907
-```
-
-```r
-bind_rows(smallest = mdp_compute_policy(list(m$transition), m$reward, discount),
-          true_policy = mdp_compute_policy(list(true_m$transition), true_m$reward, discount),
-          .id = "model") %>%
-ggplot(aes(states[state], states[state]-actions[policy], col=model)) + geom_line()
-```
-
-![](mdp-tuna_files/figure-html/unnamed-chunk-3-1.png)<!-- -->
-
-
-
-```r
 tuna_models <- parallel::mclapply(1:dim(models)[1], function(i){
   f <- switch(models[i, "model"],
               allen = appl:::allen(models[i, "r"], models[i, "K"], models[i, "C"]),
@@ -115,7 +85,7 @@ bind_rows(unif = unif, low = low, true = true, .id = "model") %>%
   ggplot(aes(states[state], states[state] - actions[policy], col = model)) + geom_line()
 ```
 
-![](mdp-tuna_files/figure-html/unnamed-chunk-6-1.png)<!-- -->
+![](mdp-tuna_files/figure-html/unnamed-chunk-5-1.png)<!-- -->
 
 
 
@@ -162,7 +132,7 @@ ggplot(aes(time, stock, color = variable)) + geom_line(lwd=1) #  + geom_point()
 ## Warning: Removed 1 rows containing missing values (geom_path).
 ```
 
-![](mdp-tuna_files/figure-html/unnamed-chunk-9-1.png)<!-- -->
+![](mdp-tuna_files/figure-html/unnamed-chunk-8-1.png)<!-- -->
 
 
 ### Final beliefs
@@ -175,7 +145,7 @@ Show the final belief over models for pomdp and mdp:
 barplot(as.numeric(mdp_hindcast$posterior[Tmax,]))
 ```
 
-![](mdp-tuna_files/figure-html/unnamed-chunk-10-1.png)<!-- -->
+![](mdp-tuna_files/figure-html/unnamed-chunk-9-1.png)<!-- -->
 
 ## Compare rates of learning
 
@@ -196,11 +166,7 @@ ggplot(aes(time, kl)) +
   stat_summary(geom="line", fun.y = mean, lwd = 1)
 ```
 
-```
-## Warning: Removed 1 rows containing non-finite values (stat_summary).
-```
-
-![](mdp-tuna_files/figure-html/unnamed-chunk-11-1.png)<!-- -->
+![](mdp-tuna_files/figure-html/unnamed-chunk-10-1.png)<!-- -->
 
 
 
@@ -256,7 +222,7 @@ ggplot(aes(time, stock)) +
   facet_wrap(~variable, ncol = 1, scales = "free_y")
 ```
 
-![](mdp-tuna_files/figure-html/unnamed-chunk-14-1.png)<!-- -->
+![](mdp-tuna_files/figure-html/unnamed-chunk-13-1.png)<!-- -->
 
 
 
@@ -284,7 +250,7 @@ df %>%
   ggplot(aes(time, stock, color = series)) + geom_line()
 ```
 
-![](mdp-tuna_files/figure-html/unnamed-chunk-16-1.png)<!-- -->
+![](mdp-tuna_files/figure-html/unnamed-chunk-15-1.png)<!-- -->
 
 
 
@@ -314,5 +280,5 @@ df %>%
   ggplot(aes(time, stock, color = series)) + geom_line()
 ```
 
-![](mdp-tuna_files/figure-html/unnamed-chunk-18-1.png)<!-- -->
+![](mdp-tuna_files/figure-html/unnamed-chunk-17-1.png)<!-- -->
 
