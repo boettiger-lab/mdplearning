@@ -11,15 +11,14 @@ library("ggplot2")
 library("tidyr")
 library("purrr")
 library("dplyr")
-#knitr::opts_chunk$set(cache = TRUE)
+knitr::opts_chunk$set(cache = TRUE)
 ```
 
 
 ```r
-## choose the state/action/obs space
 #states <- seq(0,1.2, length=200)  
-
 #states <- c(seq(0,0.12, length=30), seq(0.12, 1.2, length=200))   # Vector of actions: harvest
+
 p <- 2
 states <- seq(0, 1.2^(1/p), len=150)^p # Vector of all possible states
 
@@ -30,7 +29,7 @@ r <- 0.05699246
 sigma_g <- 0.01720091
 discount <- 0.99
 
-vars <- expand.grid(r = seq(0.025, 0.2, by =0.025), sigma_m = 0.3)
+vars <- expand.grid(r = seq(0.025, 0.2, by =0.025), sigma_m = 0.4)
 fixed <- data.frame(model = "ricker", sigma_g = sigma_g, discount = discount, K = K, C = NA)
 models <- data.frame(vars, fixed)
 
