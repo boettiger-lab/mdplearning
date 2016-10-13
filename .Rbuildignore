@@ -8,3 +8,4 @@
 inst/notebook/*
 ^codecov\.yml$
 ^data-raw$
+^appveyor\.yml$

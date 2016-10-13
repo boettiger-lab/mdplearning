@@ -1,6 +1,6 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
-[![Travis-CI Build Status](https://travis-ci.org/cboettig/mdplearning.svg?branch=master)](https://travis-ci.org/cboettig/mdplearning) [![Coverage Status](https://img.shields.io/codecov/c/github/cboettig/mdplearning/master.svg)](https://codecov.io/github/cboettig/mdplearning?branch=master) [![Project Status: WIP - Initial development is in progress, but there has not yet been a stable, usable release suitable for the public.](http://www.repostatus.org/badges/latest/wip.svg)](http://www.repostatus.org/#wip)
+[![Travis-CI Build Status](https://travis-ci.org/cboettig/mdplearning.svg?branch=master)](https://travis-ci.org/cboettig/mdplearning) [![AppVeyor Build Status](https://ci.appveyor.com/api/projects/status/github/cboettig/mdplearning?branch=master&svg=true)](https://ci.appveyor.com/project/cboettig/mdplearning) [![Coverage Status](https://img.shields.io/codecov/c/github/cboettig/mdplearning/master.svg)](https://codecov.io/github/cboettig/mdplearning?branch=master) [![Project Status: WIP - Initial development is in progress, but there has not yet been a stable, usable release suitable for the public.](http://www.repostatus.org/badges/latest/wip.svg)](http://www.repostatus.org/#wip)
 
 <!-- [![](http://www.r-pkg.org/badges/version/mdplearning)](http://www.r-pkg.org/pkg/mdplearning) -->
 mdplearning
@@ -89,5 +89,6 @@ The final belief shows a strong convergence to model 1, which was used as the tr
 
 ``` r
 out$posterior[20,]
-#> [1] 1.000000e+00 2.443497e-15
+#>    V1           V2
+#> 20  1 2.123306e-12
 ```
