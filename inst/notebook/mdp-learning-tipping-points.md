@@ -1,16 +1,11 @@
----
-title: "parameter-uncertainty"
-author: "Carl Boettiger"
-date: "8/25/2016"
-output: 
-  html_document:
-    keep_md: true
-    markdown_flavor: github
----
+# parameter-uncertainty
+Carl Boettiger  
+8/25/2016  
 
 
 
-```{r, message=FALSE}
+
+```r
 library("mdplearning")
 library("appl")
 library("tidyverse")
@@ -19,7 +14,8 @@ library("tidyverse")
 
 Initialize a simple POMDP model for fisheries:
 
-```{r}
+
+```r
 set.seed(1234)
 states <- 0:40
 actions <- states
@@ -35,7 +31,8 @@ Tmax <- 20
 We consider parameter uncertainty by examining the Ricker model over a range of `r` values, a range of `K` values, and a range of growth noise `sigma_g` values. We also consider
 the Allen model over a range of Allee threshold `C` values:
 
-```{r}
+
+```r
 rs <-  seq(0, 2, length.out = 11)
 r_models <- lapply(rs, function(r) 
   function(x, h){
@@ -68,7 +65,8 @@ C_models <- lapply(Cs, function(C)
 
 We compute the transition matrices for each, as before:
 
-```{r}
+
+```r
 get_matrices <- function(models){
   matrices <- lapply(models, function(model) 
     appl::fisheries_matrices(states = states, actions = actions, 
@@ -102,20 +100,21 @@ utility <- matrices[[1]]$reward
 ## Planning for Uncertainty
 
 First we consider the optimal solution where we simply average over the uncertainty.  We consider the policy resulting from a uniform uncertainty 
-over $r \in [`r min(rs)`, `r max(rs)`]$ compared to fixing r at a low ($r = `r rs[2]`$), average ($r = `r rs[6]`$), and high values ($r = `r rs[11]`$)
+over $r \in [0, 2]$ compared to fixing r at a low ($r = 0.2$), average ($r = 1$), and high values ($r = 2$)
 from that range. 
 
-Likewise, we consider $K \in [`r min(Ks)`, `r max(Ks)`]$ compared to fixing C at a low ($K = `r Ks[2]`$), average ($K = `r Ks[6]`$), and high values ($K = `r Ks[11]`$)
+Likewise, we consider $K \in [5, 45]$ compared to fixing C at a low ($K = 9$), average ($K = 25$), and high values ($K = 45$)
 
-For $C$ parameter in the Allen model, we consider $C \in [`r min(Cs)`, `r max(Cs)`]$ compared to fixing C at a low ($C = `r Cs[2]`$), average ($C = `r Cs[6]`$), and high values ($C = `r Cs[11]`$)
-
-
-For $\sigma$ parameter in the Ricker model, we consider $\sigma \in [`r min(sigmas)`, `r max(sigmas)`]$ compared to fixing sigma at a low ($\sigma = `r sigmas[2]`$), average ($\sigma = `r sigmas[6]`$), and high values ($\sigma = `r sigmas[11]`$)
+For $C$ parameter in the Allen model, we consider $C \in [0, 12]$ compared to fixing C at a low ($C = 3$), average ($C = NA$), and high values ($C = NA$)
 
 
+For $\sigma$ parameter in the Ricker model, we consider $\sigma \in [0.01, 0.5]$ compared to fixing sigma at a low ($\sigma = 0.059$), average ($\sigma = 0.255$), and high values ($\sigma = 0.5$)
 
 
-```{r}
+
+
+
+```r
 compare_policies <- function(transition){
   
   max <- length(transition)
@@ -144,31 +143,36 @@ compare_policies <- function(transition){
 
 
 
-```{r}
 
+```r
 policies <- map2_df(list(r_matrices, K_matrices, C_matrices, sigma_matrices), list("r", "K", "C", "sigma"),
                function(matrices,label) data.frame(model = label, compare_policies(matrices))
 )
 ```
 
-```{r}
+```
+## Warning in bind_rows_(x, .id): Unequal factor levels: coercing to character
+```
+
+
+```r
 policies %>% 
   gather(prior, policy, -states, -model) %>%
   ggplot(aes(states, states - actions[policy], col=prior, lty=prior)) + 
   geom_line() + ylab("escapement") + facet_wrap(~model)
-
-
 ```
+
+![](mdp-learning-tipping-points_files/figure-html/unnamed-chunk-7-1.png)<!-- -->
 
 
 ### Value of Perfect Information
 
 From this, we can also define the value of perfect information for these scenarios.  We define the value of information as a function of the starting state, x0. For 
 each possible starting state, we compute the value of each of the policies above under the assumption that reality is either fixed at the high parameter value
-or the low parameter value of the range. For example, $r = `r rs[2]`$, and $r = `r rs[11]`$.  We examine the value resulting from the assumption of a uniform 
+or the low parameter value of the range. For example, $r = 0.2$, and $r = 2$.  We examine the value resulting from the assumption of a uniform 
 prior normalized by the value resulting from perfect knowledge of the parameter, assuming the paramater is the higher value (`unif_high`) or the lower (`unif_low`).  
 We also compare the value resulting from using the wrong value of the parameter
-without accounting for uncertainty at all, i.e. assuming $r = `r rs[2]`$ when it is $r = `r rs[11]`$ (referred to as `low_high`) and vice versa (`high_low`).  
+without accounting for uncertainty at all, i.e. assuming $r = 0.2$ when it is $r = 2$ (referred to as `low_high`) and vice versa (`high_low`).  
 
 
 We compute the value of a fixed policy using the identical dynamic programming around Bellman recursion as in finding the optimal solution; only the given policy
@@ -179,7 +183,8 @@ Alternately we could have computed the value of information by averaging the val
 benefit of illustrating the distribution of outcomes.  We will revisit that approach later.  
 
 
-```{r}
+
+```r
 value_of_information <- function(x){
   policies <- x[[1]]
   transition <- x[[2]]
@@ -197,11 +202,10 @@ value_of_information <- function(x){
   low_high =  mdp_value_of_policy(policies$low, list(transition[[max]]),  utility, discount)  / high_high
   data.frame(state = policies$states, unif_low = unif_low, unif_high = unif_high, low_high = low_high, high_low = high_low, model = model)
 }
-
-
 ```
 
-```{r}
+
+```r
 relative_value <- list(
            list(filter(policies, model=="r"), r_matrices, "r"), 
            list(filter(policies, model=="K"), K_matrices, "K"), 
@@ -209,15 +213,47 @@ relative_value <- list(
            list(filter(policies, model=="sigma"), sigma_matrices, "sigma")) %>%
   map_df(value_of_information)
 ```
+
+```
+## Note: max number of iterations reached
+## Note: max number of iterations reached
+## Note: max number of iterations reached
+## Note: max number of iterations reached
+## Note: max number of iterations reached
+## Note: max number of iterations reached
+## Note: max number of iterations reached
+## Note: max number of iterations reached
+## Note: max number of iterations reached
+## Note: max number of iterations reached
+## Note: max number of iterations reached
+## Note: max number of iterations reached
+## Note: max number of iterations reached
+## Note: max number of iterations reached
+## Note: max number of iterations reached
+## Note: max number of iterations reached
+## Note: max number of iterations reached
+## Note: max number of iterations reached
+## Note: max number of iterations reached
+## Note: max number of iterations reached
+## Note: max number of iterations reached
+## Note: max number of iterations reached
+## Note: max number of iterations reached
+```
+
+```
+## Warning in bind_rows_(x, .id): Unequal factor levels: coercing to character
+```
   
-```{r}
+
+```r
 relative_value  %>%
     gather(scenario, value, -state, -model) %>%
     ggplot(aes(state, value, col = scenario)) + 
   geom_point() + 
   facet_wrap(~model) + coord_cartesian(ylim = c(0,1))
-
 ```
+
+![](mdp-learning-tipping-points_files/figure-html/unnamed-chunk-10-1.png)<!-- -->
 
 
 Several patterns are clear.  Since no policy is better than the optimal policy for the scenario, these relative values are always all be less than 1, as expected.  Second, accounting for uncertainty should always be better than ignoring it and using the wrong value: that is, `unif_high` is always better than `low_high`, and `unif_low` always better than `high_low`.  Note that scenarios with different underlying models cannot easily be directly compared since they are normalized to different optimums -- there is no general reason to expect that `unif_low` is larger or smaller than `unif_high`.
@@ -235,7 +271,8 @@ Under each of the above scenarios in the Ricker model, the value is realtively i
 ## Planning only
 
 
-```{r}
+
+```r
 Tmax <- 50
 true_i <- 3
 x0 <- 30
@@ -243,37 +280,49 @@ unif <- mdp_compute_policy(C_matrices, utility, discount)
 df <- mdp_planning(C_matrices[[true_i]], utility, discount, x0 = x0, Tmax = Tmax, policy = unif$policy)
 ```
 
-```{r}
+
+```r
 df %>% ggplot(aes(time, state)) + geom_line() + geom_line(aes(y = action), col = "red")
 ```
 
+![](mdp-learning-tipping-points_files/figure-html/unnamed-chunk-12-1.png)<!-- -->
+
 ### Replicates:
 
-```{r}
+
+```r
 sims <- 
 map_df(1:100, 
        function(i) mdp_planning(C_matrices[[true_i]], utility, discount, x0 = x0, Tmax = Tmax, policy = unif$policy),
   .id = "rep")
-
 ```
 
 
-```{r}
+
+```r
 sims %>% 
   ggplot(aes(time, state, group = rep)) + geom_line(alpha = 0.5)
-
 ```
+
+![](mdp-learning-tipping-points_files/figure-html/unnamed-chunk-14-1.png)<!-- -->
 
 How many have collapsed? 
 
-```{r}
+
+```r
 sims %>% filter(time == Tmax) %>% summarise(sum(state == 1))
+```
+
+```
+##   sum(state == 1)
+## 1               0
 ```
 
 
 ### What if the true model is pomdp?
 
-```{r}
+
+```r
 matrices <- appl::fisheries_matrices(states = states, actions = actions, 
                              observed_states = states, reward_fn = reward_fn,
                              f = C_models[[true_i]], sigma_g = sigma_g, sigma_m = 0.25)
@@ -286,16 +335,26 @@ map_df(1:100,
 
 sims %>% 
   ggplot(aes(time, state, group = rep)) + geom_line(alpha = 0.1)
+```
 
+![](mdp-learning-tipping-points_files/figure-html/unnamed-chunk-16-1.png)<!-- -->
+
+```r
 #How many have collapsed? 
 sims %>% filter(time == Tmax) %>% summarise(sum(state == 1))
+```
+
+```
+##   sum(state == 1)
+## 1               0
 ```
 
 
 
 ## Learning
 
-```{r}
+
+```r
 Tmax <- 50
 true_i <- 3
 out <- mdp_learning(C_matrices, utility, discount, x0 = x0, Tmax = Tmax, true_transition = C_matrices[[true_i]])
@@ -303,15 +362,18 @@ out <- mdp_learning(C_matrices, utility, discount, x0 = x0, Tmax = Tmax, true_tr
 
 Simulation trajectories:
 
-```{r}
+
+```r
 out$df %>% select(-value) %>% gather(series, stock, -time) %>%
   ggplot(aes(time, stock, color = series)) + geom_line()
-
 ```
+
+![](mdp-learning-tipping-points_files/figure-html/unnamed-chunk-18-1.png)<!-- -->
 
 Belief over models (over time)
 
-```{r}
+
+```r
 out$posterior %>% rownames_to_column("time") %>% 
   gather(par, value, -time) %>%
   mutate(time = as.numeric(time)) %>% 
@@ -319,28 +381,38 @@ out$posterior %>% rownames_to_column("time") %>%
   ggplot(aes(par, value, alpha=time)) + geom_bar(stat="identity", position="dodge")
 ```
 
+![](mdp-learning-tipping-points_files/figure-html/unnamed-chunk-19-1.png)<!-- -->
+
 
 Replicate simulations:
 
-```{r}
+
+```r
 sims <- 
 map_df(1:100, 
        function(i) mdp_learning(C_matrices, utility, discount, x0 = x0, Tmax = Tmax, true_transition = C_matrices[[true_i]])$df, 
   .id = "rep")
-
 ```
 
 
-```{r}
+
+```r
 sims %>% 
   ggplot(aes(time, state, group = rep)) + geom_line(alpha = 0.5)
-
 ```
+
+![](mdp-learning-tipping-points_files/figure-html/unnamed-chunk-21-1.png)<!-- -->
 
 How many have collapsed? 
 
-```{r}
+
+```r
 sims %>% filter(time == Tmax-1) %>% summarise(sum(state == 1))
+```
+
+```
+##   sum(state == 1)
+## 1               0
 ```
 
 
@@ -350,7 +422,8 @@ We have a much easier time learning the right value of the other parameters.
 
 #### Learning over K
 
-```{r}
+
+```r
 Tmax <- 50
 true_i <- 3
 out <- mdp_learning(K_matrices, utility, discount, x0 = x0, Tmax = Tmax, true_transition = K_matrices[[true_i]])
@@ -358,16 +431,19 @@ out <- mdp_learning(K_matrices, utility, discount, x0 = x0, Tmax = Tmax, true_tr
 
 Simulation trajectories:
 
-```{r}
+
+```r
 out$df %>% select(-value) %>% gather(series, stock, -time) %>%
   ggplot(aes(time, stock, color = series)) + geom_line()
-
 ```
+
+![](mdp-learning-tipping-points_files/figure-html/unnamed-chunk-24-1.png)<!-- -->
 
 Belief over models (over time)
 
 
-```{r}
+
+```r
 out$posterior %>% rownames_to_column("time") %>% 
   gather(par, value, -time) %>%
   mutate(time = as.numeric(time)) %>% 
@@ -375,12 +451,15 @@ out$posterior %>% rownames_to_column("time") %>%
   ggplot(aes(par, value, alpha=time)) + geom_bar(stat="identity", position="dodge")
 ```
 
+![](mdp-learning-tipping-points_files/figure-html/unnamed-chunk-25-1.png)<!-- -->
+
 
 #### Learning over r
 
 Learning the r parameter is also quite efficient:
 
-```{r}
+
+```r
 Tmax <- 50
 true_i <- 3
 out <- mdp_learning(r_matrices, utility, discount, x0 = x0, Tmax = Tmax, true_transition = r_matrices[[true_i]])
@@ -388,15 +467,18 @@ out <- mdp_learning(r_matrices, utility, discount, x0 = x0, Tmax = Tmax, true_tr
 
 Simulation trajectories:
 
-```{r}
+
+```r
 out$df %>% select(-value) %>% gather(series, stock, -time) %>%
   ggplot(aes(time, stock, color = series)) + geom_line()
-
 ```
+
+![](mdp-learning-tipping-points_files/figure-html/unnamed-chunk-27-1.png)<!-- -->
 
 Belief over models (over time)
 
-```{r}
+
+```r
 out$posterior %>% rownames_to_column("time") %>% 
   gather(par, value, -time) %>%
   mutate(time = as.numeric(time)) %>% 
@@ -404,11 +486,14 @@ out$posterior %>% rownames_to_column("time") %>%
   ggplot(aes(par, value, alpha=time)) + geom_bar(stat="identity", position="dodge")
 ```
 
+![](mdp-learning-tipping-points_files/figure-html/unnamed-chunk-28-1.png)<!-- -->
+
 
 #### Learning over sigma
 
 
-```{r}
+
+```r
 Tmax <- 50
 true_i <- 3
 out <- mdp_learning(sigma_matrices, utility, discount, x0 = x0, Tmax = Tmax, true_transition = sigma_matrices[[true_i]])
@@ -416,20 +501,25 @@ out <- mdp_learning(sigma_matrices, utility, discount, x0 = x0, Tmax = Tmax, tru
 
 Simulation trajectories:
 
-```{r}
+
+```r
 out$df %>% select(-value) %>% gather(series, stock, -time) %>%
   ggplot(aes(time, stock, color = series)) + geom_line()
-
 ```
+
+![](mdp-learning-tipping-points_files/figure-html/unnamed-chunk-30-1.png)<!-- -->
 
 Belief over models (over time)
 
 
-```{r}
+
+```r
 out$posterior %>% rownames_to_column("time") %>% 
   gather(par, value, -time) %>%
   mutate(time = as.numeric(time)) %>% 
   filter(time %in% seq(1,50, by=10)) %>%
   ggplot(aes(par, value, alpha=time)) + geom_bar(stat="identity", position="dodge")
 ```
+
+![](mdp-learning-tipping-points_files/figure-html/unnamed-chunk-31-1.png)<!-- -->
 
