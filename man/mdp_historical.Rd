@@ -5,7 +5,7 @@
 \title{mdp_historical}
 \usage{
 mdp_historical(transition, reward, discount, model_prior = NULL, state,
-  action, model_names, ...)
+  action, model_names = NA, ...)
 }
 \arguments{
 \item{transition}{list of transition matrices, one per model}

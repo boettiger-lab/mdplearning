@@ -11,7 +11,7 @@
 #' data.frame showing the evolution of the belief over models during each subsequent observation
 #' @export
 mdp_historical <- function(transition, reward, discount, model_prior = NULL,
-                            state, action, model_names, ...){
+                            state, action, model_names = NA, ...){
 
   
   if(any(is.na(model_names)))
