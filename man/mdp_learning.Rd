@@ -27,6 +27,9 @@ mdp_learning(transition, reward, discount, model_prior = NULL, x0,
 \item{a0}{previous action before starting, irrelivant unless actions influence observations and true_observation is not null}
 
 \item{...}{additional arguments to \code{\link{mdp_compute_policy}}}
+
+\item{model_names}{optional vector of names for columns in model posterior distribution. 
+Will be taken from names of transition list if none are provided here.}
 }
 \value{
 a list, containing: data frame "df" with the state, action and a value at each time step in the simulation,

@@ -4,13 +4,19 @@
 #' @inheritParams mdp_planning
 #' @param state sequence of states observed historically
 #' @param action sequence of historical actions taken at time of observing that state
+#' @param model_names optional vector of names for columns in model posterior distribution. 
+#' Will be taken from names of transition list if none are provided here. 
 #' @return a list with component "df", a data.frame showing the historical state,
 #' historical action, and what action would have been optimal by MDP; and a
 #' data.frame showing the evolution of the belief over models during each subsequent observation
 #' @export
 mdp_historical <- function(transition, reward, discount, model_prior = NULL,
-                            state, action, ...){
+                            state, action, model_names, ...){
 
+  
+  if(any(is.na(model_names)))
+    model_names <- names(transition)
+  
   Tmax <- length(state)
   n_models <- length(transition)
   optimal <- numeric(Tmax)
@@ -27,6 +33,9 @@ mdp_historical <- function(transition, reward, discount, model_prior = NULL,
     belief[t,] <- out$posterior
   }
 
+  posterior <- as.data.frame(belief)
+  if(!any(is.na(model_names))) names(posterior) <- model_names
+  
   list(df = data.frame(time = 1:Tmax, state, action, optimal),
-       posterior = as.data.frame(belief))
+       posterior = posterior)
 }

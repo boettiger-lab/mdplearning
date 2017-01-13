@@ -5,7 +5,7 @@
 \title{mdp_historical}
 \usage{
 mdp_historical(transition, reward, discount, model_prior = NULL, state,
-  action, ...)
+  action, model_names, ...)
 }
 \arguments{
 \item{transition}{list of transition matrices, one per model}
@@ -19,6 +19,9 @@ mdp_historical(transition, reward, discount, model_prior = NULL, state,
 \item{state}{sequence of states observed historically}
 
 \item{action}{sequence of historical actions taken at time of observing that state}
+
+\item{model_names}{optional vector of names for columns in model posterior distribution. 
+Will be taken from names of transition list if none are provided here.}
 
 \item{...}{additional arguments to \code{\link{mdp_compute_policy}}}
 }

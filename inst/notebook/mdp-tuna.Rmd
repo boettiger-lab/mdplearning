@@ -35,7 +35,7 @@ discount <- 0.99
 
 vars <- expand.grid(r = seq(0.025, 0.2, by =0.025), sigma_m = 0.4)
 fixed <- data.frame(model = "ricker", sigma_g = sigma_g, discount = discount, K = K, C = NA)
-models <- data.frame(vars, fixed)
+pars <- data.frame(vars, fixed)
 
 ## Usual assumption at the moment for reward fn
 reward_fn <- function(x,h) pmin(x,h)
@@ -44,17 +44,17 @@ reward_fn <- function(x,h) pmin(x,h)
 
 ```{r}
 true_m <- appl::fisheries_matrices(states, actions, obs, reward_fn, f =  appl:::ricker(r, K),
-                     sigma_g = sigma_g, sigma_m  = 0.3)
+                     sigma_g = sigma_g, sigma_m  = pars[1, "sigma_m"])
 
 
-tuna_models <- parallel::mclapply(1:dim(models)[1], function(i){
-  f <- switch(models[i, "model"],
-              allen = appl:::allen(models[i, "r"], models[i, "K"], models[i, "C"]),
-              ricker = appl:::ricker(models[i, "r"], models[i, "K"])
+models <- parallel::mclapply(1:dim(pars)[1], function(i){
+  f <- switch(pars[i, "model"],
+              allen = appl:::allen(pars[i, "r"], pars[i, "K"], pars[i, "C"]),
+              ricker = appl:::ricker(pars[i, "r"], pars[i, "K"])
   )
 
   appl::fisheries_matrices(states, actions, obs, reward_fn, f = f,
-                     sigma_g = models[i, "sigma_g"], sigma_m  = models[i, "sigma_m"])
+                     sigma_g = pars[i, "sigma_g"], sigma_m  = pars[i, "sigma_m"])
 
 
 }, mc.cores = parallel::detectCores())
@@ -62,7 +62,6 @@ tuna_models <- parallel::mclapply(1:dim(models)[1], function(i){
 
 
 ```{r}
-models <- tuna_models
 reward <- models[[1]]$reward
 transitions <- lapply(models, `[[`, "transition")
 observation <- models[[1]]$observation

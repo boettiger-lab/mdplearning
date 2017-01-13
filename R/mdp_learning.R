@@ -5,6 +5,8 @@
 #' Simulate learning under the mdp policy
 #' @inheritParams mdp_compute_policy
 #' @inheritParams mdp_planning
+#' @param model_names optional vector of names for columns in model posterior distribution. 
+#' Will be taken from names of transition list if none are provided here. 
 #' @param true_transition actual transition used to drive simulation.
 #' @return a list, containing: data frame "df" with the state, action and a value at each time step in the simulation,
 #' and a data.frame "posterior", in which the t'th row shows the belief state at time t.
@@ -64,8 +66,11 @@ mdp_learning <- function(transition, reward, discount, model_prior = NULL,
 
   }
 
+  posterior <- as.data.frame(belief[time,])
+  if(!any(is.na(model_names))) names(posterior) <- model_names
+  
   list(df = data.frame(time = 1:Tmax, state = state[time],
                    obs = obs[time], action = action[time],
                    value = value[time]),
-       posterior = as.data.frame(belief[time,]))
+       posterior = posterior)
 }
