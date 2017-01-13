@@ -33,6 +33,7 @@ mdp_learning <- function(transition, reward, discount, model_prior = NULL,
                     true_transition,
                     observation = NULL,
                     a0 = 1,
+                    model_names = NA,
                     ...){
 
   n_states <- dim(true_transition)[1]
