@@ -1,6 +1,7 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 [![Travis-CI Build Status](https://travis-ci.org/boettiger-lab/mdplearning.svg?branch=master)](https://travis-ci.org/boettiger-lab/mdplearning) [![AppVeyor Build Status](https://ci.appveyor.com/api/projects/status/github/boettiger-lab/mdplearning?branch=master&svg=true)](https://ci.appveyor.com/project/boettiger-lab/mdplearning) [![Coverage Status](https://img.shields.io/codecov/c/github/boettiger-lab/mdplearning/master.svg)](https://codecov.io/github/boettiger-lab/mdplearning?branch=master) [![Project Status: WIP - Initial development is in progress, but there has not yet been a stable, usable release suitable for the public.](http://www.repostatus.org/badges/latest/wip.svg)](http://www.repostatus.org/#wip) [![CRAN\_Status\_Badge](http://www.r-pkg.org/badges/version/mdplearning)](https://cran.r-project.org/package=mdplearning)
+[![DOI](https://zenodo.org/badge/68045474.svg)](https://zenodo.org/badge/latestdoi/68045474)
 
 mdplearning
 ===========
