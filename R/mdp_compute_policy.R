@@ -23,8 +23,8 @@ mdp_compute_policy <- function(transition, reward, discount,
                                max_iter = 500, 
                                epsilon = 1e-5,
                                Tmax = max_iter,
-                               type = c("policy iteration", 
-                                        "value iteration", 
+                               type = c("value iteration",
+                                        "policy iteration",
                                         "finite time")){
 
   type <- match.arg(type)
