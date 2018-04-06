@@ -11,4 +11,3 @@ This is data to be included in my package
 Carl Boettiger
 }
 \keyword{data}
-

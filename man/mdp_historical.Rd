@@ -33,4 +33,3 @@ data.frame showing the evolution of the belief over models during each subsequen
 \description{
 mdp_historical
 }
-

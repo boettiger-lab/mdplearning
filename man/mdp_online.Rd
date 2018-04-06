@@ -41,4 +41,3 @@ transition <- lapply(models, `[[`, "transition")
 reward <- models[[1]]$reward
 mdp_online(transition, reward, discount, c(0.5, 0.5), 10, 1, 12)
 }
-

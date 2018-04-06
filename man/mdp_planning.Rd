@@ -49,4 +49,3 @@ out <- mdp_planning(transition[[1]], reward, discount, x0 = 10,
                observation = models[[1]]$observation)
 
 }
-

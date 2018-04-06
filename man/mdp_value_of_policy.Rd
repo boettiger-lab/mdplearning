@@ -38,4 +38,3 @@ reward <- models[[1]][["reward"]]
 df <- mdp_compute_policy(transition, reward, discount)
 v <- mdp_value_of_policy(df$policy, transition, reward, discount)
 }
-

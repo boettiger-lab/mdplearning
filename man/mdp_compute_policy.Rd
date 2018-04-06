@@ -6,7 +6,7 @@
 \usage{
 mdp_compute_policy(transition, reward, discount, model_prior = NULL,
   max_iter = 500, epsilon = 1e-05, Tmax = max_iter,
-  type = c("policy iteration", "value iteration", "finite time"))
+  type = c("value iteration", "policy iteration", "finite time"))
 }
 \arguments{
 \item{transition}{list of transition matrices, one per model}
@@ -38,4 +38,3 @@ reward <- models[[1]][["reward"]]
 df <- mdp_compute_policy(transition, reward, discount)
 plot(df$state, df$state - df$policy, xlab = "stock", ylab="escapement")
 }
-
